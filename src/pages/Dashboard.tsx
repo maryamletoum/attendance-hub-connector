@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDashboardStats, DashboardStats } from "@/lib/data";
+import { getDashboardStats } from "@/lib/data";
+import { DashboardStats } from "@/lib/types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const Dashboard = () => {
