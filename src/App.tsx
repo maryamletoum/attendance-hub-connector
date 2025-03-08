@@ -4,6 +4,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Provider } from 'react-redux';
+import { store } from './redux/store';
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from './redux/hooks';
+import { checkAuthStatus } from './redux/slices/authSlice';
+
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -12,35 +18,28 @@ import Classes from "./pages/Classes";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/layout/Layout";
-import { useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-
-  // Check if user is authenticated from localStorage
+// Create an AuthProvider component
+const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const dispatch = useAppDispatch();
+  
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      setIsAuthenticated(true);
-    }
-  }, []);
+    dispatch(checkAuthStatus());
+  }, [dispatch]);
+  
+  return <>{children}</>;
+};
 
-  // Login/logout functions
-  const login = (email: string, password: string): boolean => {
-    // Simple mock authentication
-    if (email === "teacher@example.com" && password === "password") {
-      localStorage.setItem("user", JSON.stringify({ email, role: "teacher" }));
-      setIsAuthenticated(true);
-      return true;
-    }
-    return false;
-  };
+// Main App component
+const AppContent = () => {
+  const { isAuthenticated } = useAppSelector(state => state.auth);
+  const dispatch = useAppDispatch();
 
+  // Login/logout functions are now handled through Redux
   const logout = () => {
-    localStorage.removeItem("user");
-    setIsAuthenticated(false);
+    dispatch({ type: 'auth/logout' });
   };
 
   return (
@@ -57,7 +56,7 @@ const App = () => {
                 isAuthenticated ? (
                   <Navigate to="/dashboard" replace />
                 ) : (
-                  <Login login={login} />
+                  <Login />
                 )
               } 
             />
@@ -112,6 +111,16 @@ const App = () => {
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
+  );
+};
+
+const App = () => {
+  return (
+    <Provider store={store}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Provider>
   );
 };
 

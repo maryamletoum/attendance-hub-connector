@@ -5,33 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { loginUser } from '@/redux/slices/authSlice';
 
-interface LoginProps {
-  login: (email: string, password: string) => boolean;
-}
-
-const Login = ({ login }: LoginProps) => {
+const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useAppSelector(state => state.auth);
+  
   const [email, setEmail] = useState("teacher@example.com");
   const [password, setPassword] = useState("password");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    setTimeout(() => {
-      const success = login(email, password);
+    
+    try {
+      // Dispatch login action
+      const resultAction = await dispatch(loginUser({ email, password }));
       
-      if (success) {
+      if (loginUser.fulfilled.match(resultAction)) {
         toast.success("Login successful! Redirecting to dashboard...");
         navigate("/dashboard");
-      } else {
-        toast.error("Invalid email or password. Try the demo credentials.");
+      } else if (loginUser.rejected.match(resultAction) && resultAction.payload) {
+        toast.error(resultAction.payload as string);
       }
-      
-      setIsLoading(false);
-    }, 1000);
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    }
   };
 
   return (
@@ -83,6 +83,12 @@ const Login = ({ login }: LoginProps) => {
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
+        
+        {error && (
+          <div className="mt-4 text-sm text-destructive animate-slide-in-bottom">
+            {error}
+          </div>
+        )}
         
         <div className="mt-6 text-center text-sm text-muted-foreground animate-slide-in-bottom" style={{ animationDelay: "0.5s" }}>
           <p>Demo credentials are pre-filled for you.</p>
